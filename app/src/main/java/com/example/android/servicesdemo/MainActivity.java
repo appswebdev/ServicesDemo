@@ -1,8 +1,11 @@
 package com.example.android.servicesdemo;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.design.widget.FloatingActionButton;
@@ -13,6 +16,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 public class MainActivity extends AppCompatActivity {
+    private static final int REQUEST_ALARM = 10;
     ServiceConnection con;
     boolean mBounded = false;
     private MyBoundedService.MyBinder binder;
@@ -31,10 +35,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                startService(new Intent(getApplicationContext(), MyIntentService.class));
-                if (mBounded) {
-                    binder.logMessage("Fab clicked");
-                }
+               schedualAlarm();
             }
         });
 
@@ -50,6 +51,24 @@ public class MainActivity extends AppCompatActivity {
                 mBounded = false;
             }
         };
+    }
+
+    private void schedualAlarm() {
+        AlarmManager manager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        Intent intent = new Intent(this, MyAlarmReceiver.class);
+        PendingIntent pendingIntent =
+                PendingIntent.getBroadcast(this, REQUEST_ALARM, intent, PendingIntent.FLAG_ONE_SHOT);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, 6545456, pendingIntent);
+        }
+        else  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            manager.setExact(AlarmManager.RTC_WAKEUP, 6545456, pendingIntent);
+        }
+        else {
+            manager.set(AlarmManager.RTC_WAKEUP, 6545456, pendingIntent);
+        }
+
     }
 
 
