@@ -1,9 +1,11 @@
 package com.example.android.servicesdemo;
 
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -11,6 +13,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 public class MainActivity extends AppCompatActivity {
+    ServiceConnection con;
+    boolean mBounded = false;
+    private MyBoundedService.MyBinder binder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,13 +25,46 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+
+        assert fab != null;
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(getApplicationContext(), MyStartedService.class);
-                startService(intent);
+
+                startService(new Intent(getApplicationContext(), MyIntentService.class));
+                if (mBounded) {
+                    binder.logMessage("Fab clicked");
+                }
             }
         });
+
+        con = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+                mBounded = true;
+                binder = (MyBoundedService.MyBinder) iBinder;
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName componentName) {
+                mBounded = false;
+            }
+        };
+    }
+
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Intent intent = new Intent(this, MyBoundedService.class);
+        bindService(intent, con, BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unbindService(con);
+        //mBounded = false;
     }
 
     @Override
@@ -44,7 +82,8 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_start_intent_service) {
+            MyIntentServiceWithHelpers.downloadUrl(this, "http://www.google.com");
             return true;
         }
 

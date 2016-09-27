@@ -28,4 +28,10 @@ public class MyBoundedService extends Service {
             return 10;
         }
     }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        //close resources
+        return super.onUnbind(intent);
+    }
 }
